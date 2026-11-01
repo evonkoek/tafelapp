@@ -1,0 +1,13 @@
+[project]
+name = "tafelapp"
+version = "0.1.0"
+description = "TafelApp: vermenigvuldigingssommen oefenen (Python in de browser via Pyodide)"
+requires-python = ">=3.12"
+dependencies = []
+
+[dependency-groups]
+dev = ["pytest>=8"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
