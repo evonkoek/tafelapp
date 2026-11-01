@@ -15,10 +15,10 @@
   * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
   [hidden] { display:none !important; }
   html, body { height:100%; }
-  body { margin:0; font:18px/1.4 system-ui,-apple-system,sans-serif; background:var(--bg); color:var(--fg);
-         padding:max(.75rem, env(safe-area-inset-top)) .9rem max(.75rem, env(safe-area-inset-bottom)); }
-  main { max-width:30rem; margin:0 auto; min-height:100%; display:flex; flex-direction:column; gap:.9rem; }
-  h1 { margin:0; font-size:1.6rem; }
+  body { margin:0; font:16px/1.35 system-ui,-apple-system,sans-serif; background:var(--bg); color:var(--fg);
+         padding:max(.5rem, env(safe-area-inset-top)) .9rem max(.5rem, env(safe-area-inset-bottom)); }
+  main { max-width:30rem; margin:0 auto; min-height:100%; display:flex; flex-direction:column; gap:.55rem; }
+  h1 { margin:0; font-size:1.3rem; }
   h2 { margin:.2rem 0 0; font-size:1.1rem; }
   #status { margin:0; color:var(--muted); font-size:.9rem; min-height:1.3rem; }
   #status.waarschuwing { color:var(--fout); font-weight:600; }
@@ -85,7 +85,7 @@
   button { transition:transform .12s; }
   button:active { transform:scale(.94); }
   .chips button[aria-pressed="true"] { transform:scale(1.07); }
-  #confetti { position:fixed; inset:0; pointer-events:none; overflow:hidden; z-index:10; }
+  #confetti { position:fixed; inset:0; pointer-events:none; overflow:hidden; z-index:30; }
   .snipper { position:absolute; left:50%; top:42%; font-size:1.6rem; animation:vlieg 1.3s ease-out forwards; }
   @keyframes zweef { 0%,100% { transform:translateY(0) rotate(-2deg); } 50% { transform:translateY(-4px) rotate(2deg); } }
   @keyframes hop { 0% { transform:translateY(0) scale(1); } 35% { transform:translateY(-16px) scale(1.12); } 70% { transform:translateY(0) scale(.96); } 100% { transform:translateY(0) scale(1); } }
@@ -99,6 +99,65 @@
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after { animation-duration:.01ms !important; animation-iteration-count:1 !important; transition-duration:.01ms !important; }
   }
+
+  .kop button { margin-left:auto; padding:.4rem .6rem; font-size:1.1rem; border-radius:.7rem; }
+  #panda { width:3.2rem; height:3.2rem; cursor:pointer; }
+  h2 { font-size:1rem; margin:0; }
+  #status { font-size:.8rem; min-height:1rem; }
+  .chips { gap:.4rem; } .chips button { padding:.55rem 0; }
+  .sec { padding:.55rem 1rem; }
+  input[type="text"] { padding:.6rem .9rem; }
+  .vraag { font-size:clamp(2.2rem, 7dvh, 3rem); margin-top:0; line-height:1.1; }
+  .antwoord { font-size:2rem; min-height:clamp(2.8rem, 7dvh, 3.6rem); padding:.2rem; }
+  #feedback { min-height:1.3rem; font-size:.95rem; }
+  .numpad { gap:.4rem; }
+  .numpad button { font-size:1.4rem; padding:clamp(.5rem, 1.9dvh, 1rem) 0; }
+  .info { display:flex; justify-content:space-between; align-items:center; font-size:.85rem; color:var(--muted); }
+  #teller { margin:0; }
+  .reeks { min-height:0; text-align:right; }
+  .score { font-size:2.2rem; margin:0; }
+  .sterren { font-size:1.8rem; margin:0; }
+  #bericht { font-size:1.05rem; }
+  #fouten { max-height:5.5rem; overflow:auto; font-size:.9rem; }
+  #fouten h2 { font-size:.9rem; }
+  #voortgang-start .staven { display:none; }
+  #voortgang-klaar .staven { height:3rem; margin:.4rem 0 .2rem; }
+  .kaart { padding:.5rem .8rem; }
+  #scherm-klaar:not([hidden]) { display:flex; flex-direction:column; gap:.5rem; flex:1; }
+  #scherm-klaar > .rij { margin-top:auto !important; }
+  .antwoord.goed { animation:hop .6s ease, gloed 1s ease; }
+  body.wiebel main { animation:wiebel .45s; }
+  #toneel { position:fixed; inset:0; z-index:20; background:var(--bg); display:flex; flex-direction:column;
+            align-items:center; justify-content:center; gap:.8rem; overflow:hidden; padding:1rem; }
+  #figuur { width:min(60vw, 38dvh); height:auto; overflow:visible; }
+  #bubbel { max-width:20rem; text-align:center; font-size:1.25rem; font-weight:700; background:var(--card);
+            border:2px solid var(--rand); border-radius:1.2rem; padding:.7rem 1rem; animation:pop .4s ease; }
+  #bubbel:empty { display:none; }
+  #toneel-knop { min-width:12rem; }
+  .modus-intro #pop { animation:inloop 2.2s ease-out both; }
+  .modus-finale #pop { animation:opkomen .6s cubic-bezier(.3,1.6,.5,1) both; }
+  .arm, .been { transform-box:fill-box; } .arm { transform-origin:50% 8%; } .been { transform-origin:50% 5%; }
+  #figuur-kop .mond-triest { display:none; }
+  #figuur.loop { animation:bob .28s ease-in-out infinite; }
+  #figuur.loop .been.l, #figuur.dans .been.l, #figuur.feest .been.l { animation:stap .3s ease-in-out infinite alternate; }
+  #figuur.loop .been.r, #figuur.dans .been.r, #figuur.feest .been.r { animation:stap .3s ease-in-out infinite alternate-reverse; }
+  #figuur.dans { animation:dansen .7s ease-in-out infinite; }
+  #figuur.dans .arm.l, #figuur.feest .arm.l { animation:armL .35s ease-in-out infinite alternate; }
+  #figuur.dans .arm.r, #figuur.feest .arm.r { animation:armR .35s ease-in-out infinite alternate; }
+  #figuur.wenk { animation:zweef 2.4s ease-in-out infinite; }
+  #figuur.wenk .arm.r { animation:wuif .45s ease-in-out infinite alternate; }
+  #figuur.feest { animation:sprong .55s ease-in-out infinite; }
+  @keyframes bob { 0%,100% { transform:translateY(0); } 50% { transform:translateY(-8px); } }
+  @keyframes stap { from { transform:rotate(-18deg); } to { transform:rotate(18deg); } }
+  @keyframes dansen { 0%,100% { transform:rotate(-6deg) translateY(0); } 50% { transform:rotate(6deg) translateY(-16px); } }
+  @keyframes armL { from { transform:rotate(110deg); } to { transform:rotate(155deg); } }
+  @keyframes armR { from { transform:rotate(-110deg); } to { transform:rotate(-155deg); } }
+  @keyframes wuif { from { transform:rotate(-125deg); } to { transform:rotate(-165deg); } }
+  @keyframes sprong { 0%,100% { transform:translateY(0) scale(1.03,.97); } 50% { transform:translateY(-32px) scale(.97,1.03); } }
+  @keyframes inloop { from { transform:translateX(-110vw); } to { transform:translateX(0); } }
+  @keyframes opkomen { from { transform:scale(0) rotate(-40deg); } to { transform:scale(1) rotate(0); } }
+  @keyframes gloed { from { box-shadow:0 0 0 0 var(--goed); } to { box-shadow:0 0 0 22px transparent; } }
+  @keyframes wiebel { 0%,100% { transform:translateX(0); } 25% { transform:translateX(-7px); } 75% { transform:translateX(7px); } }
 </style>
 </head>
 <body>
@@ -120,9 +179,10 @@
       <h1>TafelApp 🎋</h1>
       <p id="status">Python wordt geladen…</p>
     </div>
+    <button id="geluid" class="sec" type="button" aria-label="Geluid aan of uit">🔊</button>
   </header>
 
-  <section id="scherm-start" style="display:flex; flex-direction:column; gap:.9rem">
+  <section id="scherm-start" style="display:flex; flex-direction:column; gap:.6rem">
     <h2>Wie ben jij?</h2>
     <input id="naam" type="text" maxlength="20" placeholder="Vul je naam in" autocomplete="off"
            enterkeyhint="done" aria-label="Je naam">
@@ -145,15 +205,14 @@
     <button id="start" type="button" disabled>Laten we oefenen! 🎋</button>
   </section>
 
-  <section id="scherm-vraag" hidden style="flex:1; display:none; flex-direction:column; gap:.7rem">
+  <section id="scherm-vraag" hidden style="flex:1; display:none; flex-direction:column; gap:.45rem">
     <div class="voortgang"><div id="balk"><span id="looper">🐼</span></div></div>
-    <p id="teller"></p>
-    <div id="reeks" class="reeks"></div>
+    <div class="info"><span id="teller"></span><div id="reeks" class="reeks"></div></div>
     <div id="vraag" class="vraag" aria-live="polite"></div>
     <div id="antwoord" class="antwoord" aria-live="polite"></div>
     <div id="feedback"></div>
     <div class="numpad" id="numpad"></div>
-    <button id="stop" class="sec" type="button">Stoppen</button>
+    <button id="stop" class="tekstknop" type="button">Stoppen</button>
   </section>
 
   <section id="scherm-klaar" hidden>
@@ -170,6 +229,20 @@
     </div>
   </section>
 </main>
+<div id="toneel" hidden>
+  <div id="pop">
+    <svg id="figuur" viewBox="0 0 200 250" aria-hidden="true">
+      <g class="been l"><ellipse cx="72" cy="226" rx="17" ry="22" fill="#222"/></g>
+      <g class="been r"><ellipse cx="128" cy="226" rx="17" ry="22" fill="#222"/></g>
+      <ellipse cx="100" cy="170" rx="50" ry="56" fill="#fff" stroke="#222" stroke-width="3"/>
+      <g class="arm l"><ellipse cx="54" cy="165" rx="13" ry="32" fill="#222"/></g>
+      <g class="arm r"><ellipse cx="146" cy="165" rx="13" ry="32" fill="#222"/></g>
+      <g id="figuur-kop" transform="translate(30 6) scale(1.4)"></g>
+    </svg>
+  </div>
+  <div id="bubbel"></div>
+  <button id="toneel-knop" type="button">Overslaan »</button>
+</div>
 <div id="confetti" aria-hidden="true"></div>
 <script src="app.js"></script>
 </body>

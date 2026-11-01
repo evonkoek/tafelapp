@@ -211,6 +211,111 @@ $("naam").addEventListener("change", () => kiesSpeler($("naam").value));
 $("naam").addEventListener("input", () => melding(pythonKlaar ? "Klaar om te oefenen." : "Python wordt geladen…"));
 $("naam").addEventListener("keydown", (e) => { if (e.key === "Enter") $("naam").blur(); });
 
+// ---- Geluid (zelf gesynthetiseerd, geen bestanden) --------------------------
+const GELUID = "tafelapp.geluid";
+let ctx = null;
+let geluidAan = true;
+try { geluidAan = localStorage.getItem(GELUID) !== "uit"; } catch (e) { /* standaard aan */ }
+
+function audio() {
+  if (!geluidAan) return null;
+  if (!ctx) {
+    const A = window.AudioContext || window.webkitAudioContext;
+    if (!A) return null;
+    ctx = new A();
+  }
+  if (ctx.state === "suspended") ctx.resume();
+  return ctx;
+}
+
+function piep(f, t0, d, type = "triangle", vol = 0.18, naar = 0) {
+  const c = audio();
+  if (!c) return;
+  const t = c.currentTime + t0;
+  const o = c.createOscillator();
+  const g = c.createGain();
+  o.type = type;
+  o.frequency.setValueAtTime(f, t);
+  if (naar) o.frequency.exponentialRampToValueAtTime(naar, t + d);
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(vol, t + 0.02);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + d);
+  o.connect(g).connect(c.destination);
+  o.start(t);
+  o.stop(t + d + 0.05);
+}
+
+function geluid(soort, reeks = 0) {
+  if (soort === "goed") {
+    [523, 659, 784, 1047, 1319].slice(0, Math.min(5, 3 + Math.floor(reeks / 2)))
+      .forEach((f, i) => piep(f, i * 0.07, 0.28));
+  } else if (soort === "fout") {
+    piep(300, 0, 0.25, "sawtooth", 0.08);
+    piep(220, 0.18, 0.4, "sawtooth", 0.08);
+  } else if (soort === "boing") {
+    piep(200, 0, 0.35, "sine", 0.25, 700);
+  } else if (soort === "fanfare") {
+    [[523, 0], [523, 0.14], [523, 0.28], [659, 0.42], [784, 0.62], [659, 0.82], [784, 0.95], [1047, 1.15]]
+      .forEach(([f, t]) => piep(f, t, 0.3, "square", 0.09));
+  } else if (soort === "tik") {
+    piep(880, 0, 0.05, "square", 0.04);
+  }
+}
+
+function zetGeluid(aan) {
+  geluidAan = aan;
+  $("geluid").textContent = aan ? "🔊" : "🔇";
+  try { localStorage.setItem(GELUID, aan ? "aan" : "uit"); } catch (e) { /* geen opslag */ }
+}
+
+// ---- Panda-toneel: intro en afsluiting -------------------------------------
+function toneel(modus, tekst = "", n = 3) {
+  return new Promise((klaar) => {
+    const t = $("toneel"), f = $("figuur"), knop = $("toneel-knop"), b = $("bubbel");
+    const timers = [];
+    let gesloten = false;
+    const na = (ms, fn) => timers.push(setTimeout(fn, ms));
+    const stand = (k) => f.setAttribute("class", k);
+    const sluit = () => {
+      if (gesloten) return;
+      gesloten = true;
+      timers.forEach(clearTimeout);
+      t.hidden = true;
+      if (modus === "intro") { geluid("goed", 4); pandaMood("blij"); }
+      klaar();
+    };
+    t.className = "modus-" + modus;
+    t.hidden = false;
+    b.textContent = "";
+    knop.onclick = t.onclick = sluit;
+    if (modus === "intro") {
+      knop.textContent = "Overslaan »";
+      knop.className = "sec";
+      stand("loop");
+      na(2200, () => stand("dans"));
+      na(4600, () => {
+        stand("wenk");
+        b.textContent = "Hoi! Kom je mee tafels oefenen? 🎋";
+        knop.textContent = "Ik doe mee! 🎋";
+        knop.className = "";
+      });
+    } else {
+      knop.textContent = "Verder »";
+      knop.className = "";
+      stand("feest");
+      b.textContent = tekst;
+      geluid("fanfare");
+      for (let i = 0; i <= n; i++) na(i * 700, () => feest(40 + n * 12));
+      na(4500, sluit);
+    }
+  });
+}
+
+function wiebel() {
+  document.body.classList.add("wiebel");
+  setTimeout(() => document.body.classList.remove("wiebel"), 500);
+}
+
 // ---- Panda en feestje ------------------------------------------------------
 function pandaMood(klasse, ms = 900) {
   const p = $("panda");
@@ -223,13 +328,15 @@ function pandaMood(klasse, ms = 900) {
 
 function feest(aantal = 20) {
   const laag = $("confetti");
-  const lijst = ["🎋", "⭐", "🍃", "✨", "🐼"];
+  const lijst = ["🎋", "⭐", "🍃", "✨", "🐼", "🎉", "💚", "🌟"];
   for (let i = 0; i < aantal; i++) {
     const s = el("span", lijst[Math.floor(Math.random() * lijst.length)], "snipper");
     s.style.setProperty("--x", `${(Math.random() * 80 - 40).toFixed(1)}vmin`);
     s.style.setProperty("--y", `${(-(Math.random() * 35 + 10)).toFixed(1)}vmin`);
     s.style.setProperty("--r", `${Math.round(Math.random() * 360 - 180)}deg`);
-    s.style.animationDelay = `${(Math.random() * 0.15).toFixed(2)}s`;
+    s.style.animationDelay = `${(Math.random() * 0.25).toFixed(2)}s`;
+    s.style.fontSize = `${(1.1 + Math.random() * 1.6).toFixed(1)}rem`;
+    s.style.left = `${Math.round(25 + Math.random() * 50)}%`;
     s.addEventListener("animationend", () => s.remove());
     laag.appendChild(s);
   }
@@ -304,6 +411,7 @@ function toonInvoer(klasse = "") {
 
 function toets(teken) {
   if (ronde.wacht) return;
+  geluid("tik");
   if (teken === "⌫") ronde.invoer = ronde.invoer.slice(0, -1);
   else if (ronde.invoer.length < 3) ronde.invoer += teken;
   toonInvoer();
@@ -322,7 +430,9 @@ async function bevestig() {
     $("feedback").textContent = await py("lof", ronde.reeks);
     toonReeks(true);
     pandaMood("blij");
-    feest(ronde.reeks >= 3 ? 36 : 18);
+    feest(ronde.reeks >= 3 ? 70 : 40);
+    geluid("goed", ronde.reeks);
+    if ([3, 5, 10].includes(ronde.reeks)) { geluid("fanfare"); wiebel(); }
     if (navigator.vibrate) navigator.vibrate(30);
   } else {
     ronde.reeks = 0;
@@ -331,6 +441,7 @@ async function bevestig() {
     $("feedback").textContent = `${await py("troost")} ${a} × ${b} = ${a * b}`;
     toonReeks(false);
     pandaMood("triest", 1400);
+    geluid("fout");
   }
   setTimeout(volgende, goed ? 1100 : 2100);
 }
@@ -377,8 +488,7 @@ async function eindig() {
 
   await tekenVoortgang($("voortgang-klaar"), speler, ronde.naam, false);
   toon("scherm-klaar");
-  pandaMood("blij", 1500);
-  if (sterren >= 2) feest(sterren === 3 ? 60 : 36);
+  await toneel("finale", `Wat een toppie, ${ronde.naam}! ${"⭐".repeat(sterren)}`, sterren);
 }
 
 function naarStart() {
@@ -409,3 +519,11 @@ $("andere").addEventListener("click", naarStart);
 $("stop").addEventListener("click", naarStart);
 tekenSpelers();
 toon("scherm-start");
+
+// ---- Opstarten: geluid, panda aantikken, intro -----------------------------
+$("figuur-kop").innerHTML = $("panda").innerHTML;
+$("figuur-kop").firstElementChild.remove(); // achtergrondschijf weghalen
+zetGeluid(geluidAan);
+$("geluid").addEventListener("click", () => { zetGeluid(!geluidAan); if (geluidAan) geluid("goed", 2); });
+$("panda").addEventListener("click", () => { pandaMood("blij", 900); geluid("boing"); feest(10); });
+toneel("intro");
