@@ -3,14 +3,14 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#2563eb">
+<meta name="theme-color" content="#2f855a">
 <title>TafelApp</title>
 <style>
-  :root { --bg:#ffffff; --fg:#1a1a1a; --muted:#6b7280; --accent:#2563eb; --accent-fg:#fff;
-          --card:#f3f4f6; --goed:#16a34a; --fout:#dc2626; --rand:#d1d5db; }
+  :root { --bg:#f4faf2; --fg:#1a1a1a; --muted:#6b7280; --accent:#2f855a; --accent-fg:#fff;
+          --card:#e5f1e0; --goed:#16a34a; --fout:#dc2626; --rand:#bcd5b4; }
   @media (prefers-color-scheme: dark) {
-    :root { --bg:#121212; --fg:#f0f0f0; --muted:#9ca3af; --accent:#60a5fa; --accent-fg:#0b1220;
-            --card:#1e1e1e; --goed:#4ade80; --fout:#f87171; --rand:#374151; }
+    :root { --bg:#0f1a14; --fg:#f0f0f0; --muted:#9ca3af; --accent:#68d391; --accent-fg:#0b1f14;
+            --card:#1b2b22; --goed:#4ade80; --fout:#f87171; --rand:#2f4a3a; }
   }
   * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
   [hidden] { display:none !important; }
@@ -39,8 +39,8 @@
   .chips button[aria-pressed="true"] { background:var(--accent); color:var(--accent-fg); border-color:var(--accent); }
   select { font:inherit; padding:.7rem; border-radius:.7rem; border:1px solid var(--rand); background:var(--card); color:var(--fg); }
   label { display:flex; align-items:center; justify-content:space-between; gap:1rem; }
-  .voortgang { height:.5rem; background:var(--card); border-radius:1rem; overflow:hidden; }
-  #balk { height:100%; width:0; background:var(--accent); transition:width .25s; }
+  .voortgang { height:.5rem; background:var(--card); border-radius:1rem; margin-top:1.2rem; }
+  #balk { height:100%; width:0; background:var(--accent); border-radius:1rem; position:relative; transition:width .45s cubic-bezier(.3,1.4,.5,1); }
   #teller { margin:0; color:var(--muted); text-align:center; font-size:.9rem; }
   .vraag { font-size:3rem; font-weight:700; text-align:center; margin-top:.5rem; }
   .antwoord { font-size:2.4rem; font-weight:700; text-align:center; min-height:4rem; padding:.4rem;
@@ -65,13 +65,61 @@
   .vlak { flex:1; width:100%; display:flex; align-items:flex-end; }
   .staaf { width:100%; background:var(--accent); border-radius:.3rem .3rem 0 0; min-height:3px; }
   .tekstknop { background:none; color:var(--muted); text-decoration:underline; padding:.4rem 0 0; font-size:.85rem; width:100%; }
+
+  .kop { display:flex; align-items:center; gap:.8rem; }
+  .kop h1 { color:var(--accent); }
+  #panda { width:4.4rem; height:4.4rem; flex:none; transform-origin:50% 90%; animation:zweef 3.2s ease-in-out infinite; }
+  #panda .mond-triest { display:none; }
+  #panda.blij { animation:hop .7s ease; }
+  #panda.triest { animation:schud .6s ease; }
+  #panda.triest .mond-blij { display:none; }
+  #panda.triest .mond-triest { display:inline; }
+  #looper { position:absolute; right:-.7rem; top:-1.25rem; font-size:1.3rem; animation:zweef 1.2s ease-in-out infinite; }
+  .reeks { text-align:center; min-height:1.4rem; font-weight:700; color:var(--accent); }
+  .reeks.nieuw { animation:pop .4s ease; }
+  .vraag.pop { animation:pop .45s cubic-bezier(.3,1.6,.5,1); }
+  .antwoord.goed { animation:hop .6s ease; }
+  .antwoord.fout { animation:schud .5s ease; }
+  .sterren { text-align:center; font-size:2.2rem; margin:.2rem 0; letter-spacing:.2rem; }
+  .sterren span { display:inline-block; animation:pop .5s backwards; }
+  button { transition:transform .12s; }
+  button:active { transform:scale(.94); }
+  .chips button[aria-pressed="true"] { transform:scale(1.07); }
+  #confetti { position:fixed; inset:0; pointer-events:none; overflow:hidden; z-index:10; }
+  .snipper { position:absolute; left:50%; top:42%; font-size:1.6rem; animation:vlieg 1.3s ease-out forwards; }
+  @keyframes zweef { 0%,100% { transform:translateY(0) rotate(-2deg); } 50% { transform:translateY(-4px) rotate(2deg); } }
+  @keyframes hop { 0% { transform:translateY(0) scale(1); } 35% { transform:translateY(-16px) scale(1.12); } 70% { transform:translateY(0) scale(.96); } 100% { transform:translateY(0) scale(1); } }
+  @keyframes schud { 0%,100% { transform:rotate(0); } 20% { transform:rotate(-9deg); } 40% { transform:rotate(8deg); } 60% { transform:rotate(-6deg); } 80% { transform:rotate(4deg); } }
+  @keyframes pop { 0% { transform:scale(.4); opacity:0; } 100% { transform:scale(1); opacity:1; } }
+  @keyframes vlieg {
+    0% { transform:translate(-50%,0) scale(.3) rotate(0); opacity:1; }
+    55% { transform:translate(calc(-50% + var(--x)), var(--y)) scale(1.1) rotate(var(--r)); opacity:1; }
+    100% { transform:translate(calc(-50% + var(--x)), calc(var(--y) + 40vmin)) scale(.9) rotate(calc(var(--r) * 2)); opacity:0; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration:.01ms !important; animation-iteration-count:1 !important; transition-duration:.01ms !important; }
+  }
 </style>
 </head>
 <body>
 <main>
-  <header>
-    <h1>TafelApp</h1>
-    <p id="status">Python wordt geladen…</p>
+  <header class="kop">
+    <svg id="panda" viewBox="0 0 100 100" role="img" aria-label="Panda">
+      <circle cx="50" cy="50" r="50" fill="#cfe8cf"/>
+      <circle cx="24" cy="24" r="13" fill="#222"/><circle cx="76" cy="24" r="13" fill="#222"/>
+      <ellipse cx="50" cy="56" rx="38" ry="34" fill="#fff" stroke="#222" stroke-width="3"/>
+      <ellipse cx="34" cy="50" rx="10" ry="13" fill="#222" transform="rotate(20 34 50)"/>
+      <ellipse cx="66" cy="50" rx="10" ry="13" fill="#222" transform="rotate(-20 66 50)"/>
+      <circle cx="35" cy="49" r="4" fill="#fff"/><circle cx="65" cy="49" r="4" fill="#fff"/>
+      <circle cx="36" cy="50" r="1.8" fill="#222"/><circle cx="64" cy="50" r="1.8" fill="#222"/>
+      <ellipse cx="50" cy="63" rx="6" ry="4.5" fill="#222"/>
+      <path class="mond-blij" d="M40 72 Q50 83 60 72" fill="none" stroke="#222" stroke-width="3" stroke-linecap="round"/>
+      <path class="mond-triest" d="M41 79 Q50 70 59 79" fill="none" stroke="#222" stroke-width="3" stroke-linecap="round"/>
+    </svg>
+    <div>
+      <h1>TafelApp 🎋</h1>
+      <p id="status">Python wordt geladen…</p>
+    </div>
   </header>
 
   <section id="scherm-start" style="display:flex; flex-direction:column; gap:.9rem">
@@ -94,12 +142,13 @@
         <option value="30">30</option>
       </select>
     </label>
-    <button id="start" type="button" disabled>Start</button>
+    <button id="start" type="button" disabled>Laten we oefenen! 🎋</button>
   </section>
 
   <section id="scherm-vraag" hidden style="flex:1; display:none; flex-direction:column; gap:.7rem">
-    <div class="voortgang"><div id="balk"></div></div>
+    <div class="voortgang"><div id="balk"><span id="looper">🐼</span></div></div>
     <p id="teller"></p>
+    <div id="reeks" class="reeks"></div>
     <div id="vraag" class="vraag" aria-live="polite"></div>
     <div id="antwoord" class="antwoord" aria-live="polite"></div>
     <div id="feedback"></div>
@@ -110,6 +159,7 @@
   <section id="scherm-klaar" hidden>
     <h2 id="klaar-kop">Klaar!</h2>
     <p class="score" id="score"></p>
+    <p class="sterren" id="sterren"></p>
     <p id="bericht"></p>
     <p id="vergelijk" class="klein"></p>
     <div id="fouten"></div>
@@ -120,6 +170,7 @@
     </div>
   </section>
 </main>
+<div id="confetti" aria-hidden="true"></div>
 <script src="app.js"></script>
 </body>
 </html>

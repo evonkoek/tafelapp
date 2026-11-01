@@ -97,3 +97,33 @@ def statistieken(resultaten_json):
         "percentages": percentages,
         "trend": trend,
     }
+
+
+LOF = ["Goed zo!", "Lekker bezig!", "Bamboe-top!", "Panda-proof!", "Geweldig!", "Yes!", "Knap hoor!"]
+LOF_REEKS = {
+    3: "Drie op een rij!",
+    5: "Vijf op een rij, wat een panda-power!",
+    10: "TIEN op een rij! Superpanda!",
+}
+TROOST = [
+    "Bijna! Panda gelooft in je.",
+    "Oeps! Van fouten leer je.",
+    "Net niet, je kunt het!",
+    "Niet erg, de volgende lukt vast.",
+]
+
+
+def lof(reeks):
+    """Een vrolijke complimentzin; bij bijzondere reeksen een extra groot compliment."""
+    return LOF_REEKS.get(int(reeks)) or random.choice(LOF)
+
+
+def troost():
+    """Een bemoedigende zin na een fout antwoord."""
+    return random.choice(TROOST)
+
+
+def sterren(goed, totaal):
+    """Aantal sterren (1 t/m 3) voor een afgeronde ronde."""
+    pct = int(goed) / max(1, int(totaal))
+    return 3 if pct >= 0.9 else 2 if pct >= 0.7 else 1

@@ -63,3 +63,14 @@ def test_statistieken_trend_lager_en_stabiel():
     assert "lager" in statistieken(json.dumps(lager))["trend"]
     stabiel = [{"goed": 7, "totaal": 10}] * 5
     assert "stabiel" in statistieken(json.dumps(stabiel))["trend"]
+
+
+def test_lof_troost_sterren():
+    from tafelapp.core import LOF, TROOST, lof, sterren, troost
+
+    assert lof(1) in LOF
+    assert "rij" in lof(3)
+    assert troost() in TROOST
+    assert sterren(10, 10) == 3
+    assert sterren(8, 10) == 2
+    assert sterren(2, 10) == 1

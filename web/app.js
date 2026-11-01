@@ -211,6 +211,37 @@ $("naam").addEventListener("change", () => kiesSpeler($("naam").value));
 $("naam").addEventListener("input", () => melding(pythonKlaar ? "Klaar om te oefenen." : "Python wordt geladen…"));
 $("naam").addEventListener("keydown", (e) => { if (e.key === "Enter") $("naam").blur(); });
 
+// ---- Panda en feestje ------------------------------------------------------
+function pandaMood(klasse, ms = 900) {
+  const p = $("panda");
+  p.classList.remove("blij", "triest");
+  void p.getBoundingClientRect(); // animatie opnieuw starten
+  p.classList.add(klasse);
+  clearTimeout(p._t);
+  p._t = setTimeout(() => p.classList.remove(klasse), ms);
+}
+
+function feest(aantal = 20) {
+  const laag = $("confetti");
+  const lijst = ["🎋", "⭐", "🍃", "✨", "🐼"];
+  for (let i = 0; i < aantal; i++) {
+    const s = el("span", lijst[Math.floor(Math.random() * lijst.length)], "snipper");
+    s.style.setProperty("--x", `${(Math.random() * 80 - 40).toFixed(1)}vmin`);
+    s.style.setProperty("--y", `${(-(Math.random() * 35 + 10)).toFixed(1)}vmin`);
+    s.style.setProperty("--r", `${Math.round(Math.random() * 360 - 180)}deg`);
+    s.style.animationDelay = `${(Math.random() * 0.15).toFixed(2)}s`;
+    s.addEventListener("animationend", () => s.remove());
+    laag.appendChild(s);
+  }
+}
+
+function toonReeks(animatie) {
+  const r = $("reeks");
+  r.textContent = ronde.reeks >= 2 ? `🎋 ${ronde.reeks} op een rij!` : "";
+  r.classList.remove("nieuw");
+  if (animatie && ronde.reeks >= 2) { void r.offsetWidth; r.classList.add("nieuw"); }
+}
+
 // ---- Oefenronde ------------------------------------------------------------
 const ronde = { vragen: [], i: 0, goed: 0, fouten: [], invoer: "", wacht: false, sleutel: "", naam: "", tafels: [] };
 
@@ -243,7 +274,7 @@ async function startRonde() {
   melding("");
   ronde.vragen = await py("maak_vragen", tafels, aantal);
   Object.assign(ronde, {
-    i: 0, goed: 0, fouten: [], invoer: "", wacht: false,
+    i: 0, goed: 0, reeks: 0, besteReeks: 0, fouten: [], invoer: "", wacht: false,
     sleutel: speler.sleutel, naam: speler.naam, tafels,
   });
   toon("scherm-vraag");
@@ -256,6 +287,10 @@ function toonVraag() {
   $("teller").textContent = `Som ${ronde.i + 1} van ${ronde.vragen.length}`;
   $("balk").style.width = `${(ronde.i / ronde.vragen.length) * 100}%`;
   $("feedback").textContent = "";
+  $("vraag").classList.remove("pop");
+  void $("vraag").offsetWidth;
+  $("vraag").classList.add("pop");
+  toonReeks(false);
   ronde.invoer = "";
   ronde.wacht = false;
   toonInvoer();
@@ -281,14 +316,23 @@ async function bevestig() {
   const goed = await py("controleer", a, b, ronde.invoer);
   if (goed) {
     ronde.goed++;
+    ronde.reeks++;
+    ronde.besteReeks = Math.max(ronde.besteReeks, ronde.reeks);
     toonInvoer("goed");
-    $("feedback").textContent = "Goed!";
+    $("feedback").textContent = await py("lof", ronde.reeks);
+    toonReeks(true);
+    pandaMood("blij");
+    feest(ronde.reeks >= 3 ? 36 : 18);
+    if (navigator.vibrate) navigator.vibrate(30);
   } else {
+    ronde.reeks = 0;
     ronde.fouten.push({ a, b, jij: ronde.invoer, antwoord: a * b });
     toonInvoer("fout");
-    $("feedback").textContent = `Helaas: ${a} × ${b} = ${a * b}`;
+    $("feedback").textContent = `${await py("troost")} ${a} × ${b} = ${a * b}`;
+    toonReeks(false);
+    pandaMood("triest", 1400);
   }
-  setTimeout(volgende, goed ? 700 : 1900);
+  setTimeout(volgende, goed ? 1100 : 2100);
 }
 
 function volgende() {
@@ -311,9 +355,15 @@ async function eindig() {
   $("klaar-kop").textContent = `Klaar, ${ronde.naam}!`;
   $("score").textContent = `${ronde.goed} / ${totaal}`;
   $("bericht").textContent = await py("beoordeling", ronde.goed, totaal);
-  $("vergelijk").textContent = vorige
+  const sterren = await py("sterren", ronde.goed, totaal);
+  $("sterren").replaceChildren(...[0, 1, 2].map((i) => {
+    const s = el("span", i < sterren ? "⭐" : "☆");
+    s.style.animationDelay = `${i * 0.25}s`;
+    return s;
+  }));
+  $("vergelijk").textContent = (vorige
     ? `Vorige ronde: ${vorige.goed} / ${vorige.totaal}`
-    : "Dit was je eerste ronde!";
+    : "Dit was je eerste ronde!") + (ronde.besteReeks >= 2 ? ` · Langste reeks: ${ronde.besteReeks}` : "");
 
   const lijst = $("fouten");
   lijst.replaceChildren();
@@ -327,6 +377,8 @@ async function eindig() {
 
   await tekenVoortgang($("voortgang-klaar"), speler, ronde.naam, false);
   toon("scherm-klaar");
+  pandaMood("blij", 1500);
+  if (sterren >= 2) feest(sterren === 3 ? 60 : 36);
 }
 
 function naarStart() {
