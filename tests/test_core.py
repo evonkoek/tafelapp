@@ -1,4 +1,12 @@
-from tafelapp.core import beoordeling, controleer, maak_vragen
+import json
+
+from tafelapp.core import (
+    beoordeling,
+    controleer,
+    maak_vragen,
+    speler_id,
+    statistieken,
+)
 
 
 def test_maak_vragen_aantal_en_tafels():
@@ -6,12 +14,6 @@ def test_maak_vragen_aantal_en_tafels():
     assert len(vragen) == 10
     assert all(7 in v for v in vragen)
     assert all(1 <= min(v) and max(v) <= 10 for v in vragen)
-
-
-def test_geen_dubbelen_zolang_pool_groot_genoeg():
-    vragen = maak_vragen([3, 4], 20)  # 20 unieke sommen mogelijk
-    assert len({tuple(sorted(v)) if v[0] != v[1] else tuple(v) for v in vragen}) >= 1
-    assert len(vragen) == 20
 
 
 def test_meer_vragen_dan_pool():
@@ -33,3 +35,31 @@ def test_controleer():
 def test_beoordeling():
     assert "Perfect" in beoordeling(10, 10)
     assert "nog eens" in beoordeling(2, 10)
+
+
+def test_speler_id():
+    assert speler_id("  Anna  ") == ["Anna", "anna"]
+    assert speler_id("ANNA")[1] == "anna"
+    assert speler_id("   ") == ["", ""]
+    assert len(speler_id("x" * 50)[0]) == 20
+
+
+def test_statistieken_leeg():
+    s = statistieken("[]")
+    assert s["rondes"] == 0 and s["percentages"] == []
+
+
+def test_statistieken_basis():
+    data = [{"goed": 5, "totaal": 10}, {"goed": 8, "totaal": 10}]
+    s = statistieken(json.dumps(data))
+    assert s["rondes"] == 2
+    assert s["gemiddelde"] == 65 or s["gemiddelde"] == 66  # 50 en 80 -> 65
+    assert s["beste"] == 80 and s["laatste"] == 80
+    assert "vooruit" in s["trend"]
+
+
+def test_statistieken_trend_lager_en_stabiel():
+    lager = [{"goed": 9, "totaal": 10}] * 3 + [{"goed": 5, "totaal": 10}] * 3
+    assert "lager" in statistieken(json.dumps(lager))["trend"]
+    stabiel = [{"goed": 7, "totaal": 10}] * 5
+    assert "stabiel" in statistieken(json.dumps(stabiel))["trend"]

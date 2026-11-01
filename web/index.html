@@ -20,13 +20,20 @@
   main { max-width:30rem; margin:0 auto; min-height:100%; display:flex; flex-direction:column; gap:.9rem; }
   h1 { margin:0; font-size:1.6rem; }
   h2 { margin:.2rem 0 0; font-size:1.1rem; }
-  #status { margin:0; color:var(--muted); font-size:.9rem; }
+  #status { margin:0; color:var(--muted); font-size:.9rem; min-height:1.3rem; }
+  #status.waarschuwing { color:var(--fout); font-weight:600; }
   button { font:inherit; border:0; border-radius:.9rem; padding:.9rem 1rem; cursor:pointer;
            background:var(--accent); color:var(--accent-fg); touch-action:manipulation; }
   button:disabled { opacity:.45; cursor:default; }
   button.sec { background:var(--card); color:var(--fg); border:1px solid var(--rand); }
   .rij { display:flex; gap:.6rem; }
   .rij > * { flex:1; }
+  input[type="text"] { font:inherit; width:100%; padding:.8rem 1rem; border-radius:.9rem;
+                       border:2px solid var(--rand); background:var(--card); color:var(--fg); }
+  input[type="text"]:focus { outline:none; border-color:var(--accent); }
+  .spelers { display:flex; flex-wrap:wrap; gap:.5rem; }
+  .spelers button { padding:.45rem .9rem; border-radius:2rem; background:var(--card); color:var(--fg);
+                    border:1px solid var(--rand); font-size:.95rem; }
   .chips { display:grid; grid-template-columns:repeat(5, 1fr); gap:.5rem; }
   .chips button { background:var(--card); color:var(--fg); border:2px solid var(--rand); padding:.8rem 0; font-weight:600; }
   .chips button[aria-pressed="true"] { background:var(--accent); color:var(--accent-fg); border-color:var(--accent); }
@@ -47,6 +54,17 @@
   .score { font-size:3rem; font-weight:700; text-align:center; margin:.5rem 0 0; }
   #bericht { text-align:center; margin:0; font-size:1.2rem; }
   ul { padding-left:1.2rem; margin:.3rem 0; }
+  .klein { color:var(--muted); font-size:.9rem; text-align:center; margin:.2rem 0; }
+  .kaart { background:var(--card); border:1px solid var(--rand); border-radius:1rem; padding:.8rem 1rem; }
+  .kaart h3 { margin:0 0 .5rem; font-size:1rem; }
+  .cijfers { display:grid; grid-template-columns:repeat(4, 1fr); gap:.3rem; text-align:center; }
+  .cijfers b { display:block; font-size:1.3rem; }
+  .cijfers span { font-size:.75rem; color:var(--muted); }
+  .staven { display:flex; gap:.3rem; height:5.5rem; margin:.7rem 0 .3rem; }
+  .stavo { flex:1; display:flex; flex-direction:column; align-items:center; font-size:.65rem; color:var(--muted); }
+  .vlak { flex:1; width:100%; display:flex; align-items:flex-end; }
+  .staaf { width:100%; background:var(--accent); border-radius:.3rem .3rem 0 0; min-height:3px; }
+  .tekstknop { background:none; color:var(--muted); text-decoration:underline; padding:.4rem 0 0; font-size:.85rem; width:100%; }
 </style>
 </head>
 <body>
@@ -56,7 +74,13 @@
     <p id="status">Python wordt geladen…</p>
   </header>
 
-  <section id="scherm-start" class="scherm" style="display:flex; flex-direction:column; gap:.9rem">
+  <section id="scherm-start" style="display:flex; flex-direction:column; gap:.9rem">
+    <h2>Wie ben jij?</h2>
+    <input id="naam" type="text" maxlength="20" placeholder="Vul je naam in" autocomplete="off"
+           enterkeyhint="done" aria-label="Je naam">
+    <div id="spelers" class="spelers" hidden></div>
+    <div id="voortgang-start"></div>
+
     <h2>Welke tafels wil je oefenen?</h2>
     <div id="tafels" class="chips"></div>
     <div class="rij">
@@ -84,10 +108,12 @@
   </section>
 
   <section id="scherm-klaar" hidden>
-    <h2>Klaar!</h2>
+    <h2 id="klaar-kop">Klaar!</h2>
     <p class="score" id="score"></p>
     <p id="bericht"></p>
+    <p id="vergelijk" class="klein"></p>
     <div id="fouten"></div>
+    <div id="voortgang-klaar" style="margin-top:.8rem"></div>
     <div class="rij" style="margin-top:1rem">
       <button id="opnieuw" type="button">Nog een keer</button>
       <button id="andere" class="sec" type="button">Andere tafels</button>
