@@ -99,14 +99,14 @@ def statistieken(resultaten_json):
     }
 
 
-LOF = ["Goed zo!", "Lekker bezig!", "Bamboe-top!", "Panda-proof!", "Geweldig!", "Yes!", "Knap hoor!"]
+LOF = ["Goed zo!", "Lekker bezig!", "Super!", "Top!", "Geweldig!", "Yes!", "Knap hoor!"]
 LOF_REEKS = {
     3: "Drie op een rij!",
-    5: "Vijf op een rij, wat een panda-power!",
-    10: "TIEN op een rij! Superpanda!",
+    5: "Vijf op een rij, wat een kanjer!",
+    10: "TIEN op een rij! Echt een kampioen!",
 }
 TROOST = [
-    "Bijna! Panda gelooft in je.",
+    "Bijna! Je kunt het.",
     "Oeps! Van fouten leer je.",
     "Net niet, je kunt het!",
     "Niet erg, de volgende lukt vast.",
@@ -136,7 +136,9 @@ LEVELS = {
     1: {"naam": "Kiezen", "kies": True, "tijd": 0},
     2: {"naam": "Intikken", "kies": False, "tijd": 0},
     3: {"naam": "Tegen de klok", "kies": False, "tijd": 10},
-}  # level 4 en 5 volgen later
+    4: {"naam": "Sneller", "kies": False, "tijd": 6},
+    5: {"naam": "Omgedraaid", "kies": False, "tijd": 6, "omgekeerd": True},
+}
 
 
 def opties(a, b, aantal=4):
@@ -179,6 +181,7 @@ def overzicht(voortgang_json):
                 "naam": info["naam"] if info else "Binnenkort",
                 "kies": bool(info and info["kies"]),
                 "tijd": info["tijd"] if info else 0,
+                "omgekeerd": bool(info and info.get("omgekeerd")),
                 "beschikbaar": info is not None,
                 "open": info is not None and vorige_gehaald,
                 "gehaald": gehaald,
@@ -187,3 +190,11 @@ def overzicht(voortgang_json):
             vorige_gehaald = gehaald
         resultaat[str(tafel)] = lijst
     return resultaat
+
+
+def omgekeerd(a, b):
+    """Omgedraaide som: [tekst, juist antwoord], bijvoorbeeld ["7 × ? = 56", 8]."""
+    a, b = int(a), int(b)
+    if random.random() < 0.5:
+        return [f"{a} × ? = {a * b}", b]
+    return [f"? × {b} = {a * b}", a]

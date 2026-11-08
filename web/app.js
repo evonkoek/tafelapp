@@ -45,6 +45,8 @@ function melding(tekst, waarschuwing = false) {
 }
 
 function toon(scherm) {
+  document.body.classList.toggle("thema-som", scherm === "scherm-vraag");
+  document.body.classList.toggle("thema-menu", scherm !== "scherm-vraag");
   for (const id of ["scherm-start", "scherm-levels", "scherm-vraag", "scherm-klaar"]) {
     const sectie = $(id);
     const zichtbaar = id === scherm;
@@ -297,7 +299,7 @@ function zetGeluid(aan) {
 // ---- Panda-toneel: intro en afsluiting -------------------------------------
 function toneel(modus, tekst = "", n = 3) {
   return new Promise((klaar) => {
-    const t = $("toneel"), f = $(modus === "intro" ? "aap" : "figuur"), knop = $("toneel-knop"), b = $("bubbel");
+    const t = $("toneel"), f = $("aap"), knop = $("toneel-knop"), b = $("bubbel");
     const timers = [];
     let gesloten = false;
     const na = (ms, fn) => timers.push(setTimeout(fn, ms));
@@ -307,7 +309,7 @@ function toneel(modus, tekst = "", n = 3) {
       gesloten = true;
       timers.forEach(clearTimeout);
       t.hidden = true;
-      if (modus === "intro") { geluid("goed", 4); pandaMood("blij"); }
+      if (modus === "intro") geluid("goed", 4);
       klaar();
     };
     t.className = "modus-" + modus;
@@ -321,14 +323,14 @@ function toneel(modus, tekst = "", n = 3) {
       na(2200, () => stand("dans"));
       na(4300, () => {
         stand("klap");
-        b.textContent = "Hoi! Kom je mee tafels oefenen? 🎋";
-        knop.textContent = "Ik doe mee! 🎋";
+        b.textContent = "Hoi! Kom je mee tafels oefenen?";
+        knop.textContent = "Ik doe mee!";
         knop.className = "";
       });
     } else {
       knop.textContent = "Verder »";
       knop.className = "";
-      stand("feest");
+      stand("dans");
       b.textContent = tekst;
       geluid("fanfare");
       for (let i = 0; i <= n; i++) na(i * 700, () => feest(40 + n * 12));
@@ -343,25 +345,19 @@ function wiebel() {
 }
 
 // ---- Panda en feestje ------------------------------------------------------
-function pandaMood(klasse, ms = 900) {
-  const p = $("panda");
-  p.classList.remove("blij", "triest");
-  void p.getBoundingClientRect(); // animatie opnieuw starten
-  p.classList.add(klasse);
-  clearTimeout(p._t);
-  p._t = setTimeout(() => p.classList.remove(klasse), ms);
-}
-
 function feest(aantal = 20) {
   const laag = $("confetti");
-  const lijst = ["🎋", "⭐", "🍃", "✨", "🐼", "🎉", "💚", "🌟"];
+  const kleuren = ["#ff595e", "#ffca3a", "#8ac926", "#1982c4", "#6a4c93", "#ff7eb3", "#ff9f1c"];
   for (let i = 0; i < aantal; i++) {
-    const s = el("span", lijst[Math.floor(Math.random() * lijst.length)], "snipper");
+    const s = el("span", undefined, "snipper");
+    s.style.background = kleuren[Math.floor(Math.random() * kleuren.length)];
     s.style.setProperty("--x", `${(Math.random() * 80 - 40).toFixed(1)}vmin`);
     s.style.setProperty("--y", `${(-(Math.random() * 35 + 10)).toFixed(1)}vmin`);
     s.style.setProperty("--r", `${Math.round(Math.random() * 360 - 180)}deg`);
     s.style.animationDelay = `${(Math.random() * 0.25).toFixed(2)}s`;
-    s.style.fontSize = `${(1.1 + Math.random() * 1.6).toFixed(1)}rem`;
+    s.style.width = `${(0.4 + Math.random() * 0.5).toFixed(2)}rem`;
+    s.style.height = `${(0.6 + Math.random() * 0.7).toFixed(2)}rem`;
+    if (Math.random() < 0.3) s.style.borderRadius = "50%";
     s.style.left = `${Math.round(25 + Math.random() * 50)}%`;
     s.addEventListener("animationend", () => s.remove());
     laag.appendChild(s);
@@ -370,7 +366,7 @@ function feest(aantal = 20) {
 
 function toonReeks(animatie) {
   const r = $("reeks");
-  r.textContent = ronde.reeks >= 2 ? `🎋 ${ronde.reeks} op een rij!` : "";
+  r.textContent = ronde.reeks >= 2 ? `🔥 ${ronde.reeks} op een rij!` : "";
   r.classList.remove("nieuw");
   if (animatie && ronde.reeks >= 2) { void r.offsetWidth; r.classList.add("nieuw"); }
 }
@@ -436,9 +432,18 @@ function startTimer(sec) {
   timerId = setTimeout(() => beantwoord("", true), sec * 1000);
 }
 
-function toonVraag() {
+async function toonVraag() {
+  ronde.wacht = true;
   const [a, b] = ronde.vragen[ronde.i];
-  $("vraag").textContent = `${a} × ${b}`;
+  $("vraag").classList.toggle("lang", !!ronde.niv.omgekeerd);
+  if (ronde.niv.omgekeerd) {
+    const [tekst, juist] = await py("omgekeerd", a, b);
+    $("vraag").textContent = tekst;
+    ronde.juist = juist;
+  } else {
+    $("vraag").textContent = `${a} × ${b}`;
+    ronde.juist = a * b;
+  }
   $("teller").textContent = `Tafel ${ronde.tafel} · L${ronde.niveau} · Som ${ronde.i + 1}/${ronde.vragen.length}`;
   $("balk").style.width = `${(ronde.i / ronde.vragen.length) * 100}%`;
   $("feedback").textContent = "";
@@ -482,8 +487,8 @@ async function beantwoord(gegeven, teLaat = false) {
   stopTimer();
   ronde.invoer = gegeven;
   const [a, b] = ronde.vragen[ronde.i];
-  const goed = await py("controleer", a, b, gegeven);
-  if (ronde.niv.kies) markeerOpties(gegeven, a * b);
+  const goed = await py("controleer", ronde.juist, 1, gegeven);
+  if (ronde.niv.kies) markeerOpties(gegeven, ronde.juist);
   if (goed) {
     ronde.goed++;
     ronde.reeks++;
@@ -491,7 +496,6 @@ async function beantwoord(gegeven, teLaat = false) {
     toonInvoer("goed");
     $("feedback").textContent = await py("lof", ronde.reeks);
     toonReeks(true);
-    pandaMood("blij");
     feest(ronde.reeks >= 3 ? 70 : 40);
     geluid("goed", ronde.reeks);
     if ([3, 5, 10].includes(ronde.reeks)) { geluid("fanfare"); wiebel(); }
@@ -502,7 +506,6 @@ async function beantwoord(gegeven, teLaat = false) {
     toonInvoer("fout");
     $("feedback").textContent = `${teLaat ? "Te laat! " : ""}${await py("troost")} ${a} × ${b} = ${a * b}`;
     toonReeks(false);
-    pandaMood("triest", 1400);
     geluid("fout");
   }
   setTimeout(volgende, goed ? 1100 : 2100);
@@ -559,7 +562,9 @@ async function eindig() {
 
   await tekenVoortgang($("voortgang-klaar"), speler, ronde.naam, false);
   toon("scherm-klaar");
-  await toneel("finale", `Wat een toppie, ${ronde.naam}! ${"⭐".repeat(sterren)}`, sterren);
+  if (lv[ronde.niveau - 1].gehaald) {
+    await toneel("finale", `Level gehaald, ${ronde.naam}! ${"⭐".repeat(sterren)}`, sterren);
+  }
 }
 
 function naarStart() {
@@ -592,12 +597,7 @@ $("stop").addEventListener("click", naarStart);
 tekenSpelers();
 toon("scherm-start");
 
-// ---- Opstarten: geluid, panda aantikken, intro -----------------------------
-$("figuur-kop").innerHTML = $("panda").innerHTML;
-$("figuur-kop").firstElementChild.remove(); // achtergrondschijf weghalen
-$("aap-pandakop").innerHTML = $("panda").innerHTML;
-$("aap-pandakop").firstElementChild.remove();
+// ---- Opstarten: geluid en intro -----------------------------
 zetGeluid(geluidAan);
 $("geluid").addEventListener("click", () => { zetGeluid(!geluidAan); if (geluidAan) geluid("goed", 2); });
-$("panda").addEventListener("click", () => { pandaMood("blij", 900); geluid("boing"); feest(10); });
 toneel("intro");

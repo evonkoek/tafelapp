@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#2f855a">
+<meta name="theme-color" content="#ff9f43">
 <title>TafelApp</title>
 <style>
   :root { --bg:#f4faf2; --fg:#1a1a1a; --muted:#6b7280; --accent:#2f855a; --accent-fg:#fff;
@@ -175,7 +175,6 @@
   .opties button.fout { background:var(--fout); color:#fff; border-color:var(--fout); animation:schud .5s ease; }
   .tijd { height:.7rem; background:var(--card); border-radius:1rem; overflow:hidden; }
   #tijdvul { height:100%; width:100%; background:var(--accent); }
-  .modus-intro #figuur, .modus-finale #aap { display:none; }
   #toneel.modus-intro { background:linear-gradient(180deg, #d6efff 0%, #5b9bd5 100%); }
   #aap { width:min(58vw, 34dvh); height:auto; overflow:visible; }
   #aap .beenA { transform-box:fill-box; transform-origin:50% 5%; }
@@ -184,35 +183,41 @@
   #aap.loop .beenA.l, #aap.dans .beenA.l { animation:stap .3s ease-in-out infinite alternate; }
   #aap.loop .beenA.r, #aap.dans .beenA.r { animation:stap .3s ease-in-out infinite alternate-reverse; }
   #aap.dans { animation:dansen .6s ease-in-out infinite; }
-  #aap.dans .armA.l { animation:zwaaiL .3s ease-in-out infinite alternate; }
-  #aap.dans .armA.r { animation:zwaaiR .3s ease-in-out infinite alternate; }
   #aap.klap { animation:zweef 1.4s ease-in-out infinite; }
-  #aap.klap .armA.l { animation:klapL .32s ease-in-out infinite alternate; }
-  #aap.klap .armA.r { animation:klapR .32s ease-in-out infinite alternate; }
   @keyframes staart { from { transform:rotate(-12deg); } to { transform:rotate(12deg); } }
-  @keyframes zwaaiL { from { transform:rotate(-5deg); } to { transform:rotate(-35deg); } }
-  @keyframes zwaaiR { from { transform:rotate(5deg); } to { transform:rotate(35deg); } }
-  @keyframes klapL { from { transform:rotate(-8deg); } to { transform:rotate(-58deg); } }
-  @keyframes klapR { from { transform:rotate(8deg); } to { transform:rotate(58deg); } }
+
+  body { --fg:#2d1b3d; --muted:#6a5a78; --card:rgba(255,255,255,.72); --rand:rgba(70,40,90,.25);
+         --accent:#7c3aed; --accent-fg:#fff; --goed:#15803d; --fout:#dc2626; background-attachment:fixed; }
+  body.thema-menu { background:linear-gradient(160deg, #fff3b0 0%, #ffd166 45%, #ff9f43 100%); }
+  body.thema-som { background:linear-gradient(160deg, #ffd6ee 0%, #e2b8ff 55%, #b794f6 100%); }
+  #toneel.modus-finale { background:linear-gradient(160deg, #fff3b0 0%, #ffd166 45%, #ff9f43 100%); }
+  .vraag.lang { font-size:clamp(1.8rem, 9vw, 2.4rem); }
+  #aap .onder.l { transform:rotate(-12deg); } #aap .onder.r { transform:rotate(12deg); }
+  #aap.loop .boven.l, #aap.loop .boven.r { animation:marsU .3s ease-in-out infinite alternate; }
+  #aap.dans .boven.l { animation:dansUL .35s ease-in-out infinite alternate; }
+  #aap.dans .boven.r { animation:dansUR .35s ease-in-out -.35s infinite alternate; }
+  #aap.dans .onder.l { animation:dansFL .35s ease-in-out infinite alternate; }
+  #aap.dans .onder.r { animation:dansFR .35s ease-in-out -.35s infinite alternate; }
+  #aap.klap .boven.l { animation:klapUL .3s ease-in-out infinite alternate; }
+  #aap.klap .boven.r { animation:klapUR .3s ease-in-out infinite alternate; }
+  #aap.klap .onder.l { animation:klapFL .3s ease-in-out infinite alternate; }
+  #aap.klap .onder.r { animation:klapFR .3s ease-in-out infinite alternate; }
+  @keyframes marsU { from { transform:rotate(25deg); } to { transform:rotate(-25deg); } }
+  @keyframes dansUL { from { transform:rotate(25deg); } to { transform:rotate(150deg); } }
+  @keyframes dansUR { from { transform:rotate(-25deg); } to { transform:rotate(-150deg); } }
+  @keyframes dansFL { from { transform:rotate(-15deg); } to { transform:rotate(-50deg); } }
+  @keyframes dansFR { from { transform:rotate(15deg); } to { transform:rotate(50deg); } }
+  @keyframes klapUL { from { transform:rotate(10deg); } to { transform:rotate(-25deg); } }
+  @keyframes klapUR { from { transform:rotate(-10deg); } to { transform:rotate(25deg); } }
+  @keyframes klapFL { from { transform:rotate(-120deg); } to { transform:rotate(-110deg); } }
+  @keyframes klapFR { from { transform:rotate(120deg); } to { transform:rotate(110deg); } }
 </style>
 </head>
-<body>
+<body class="thema-menu">
 <main>
   <header class="kop">
-    <svg id="panda" viewBox="0 0 100 100" role="img" aria-label="Panda">
-      <circle cx="50" cy="50" r="50" fill="#cfe8cf"/>
-      <circle cx="24" cy="24" r="13" fill="#222"/><circle cx="76" cy="24" r="13" fill="#222"/>
-      <ellipse cx="50" cy="56" rx="38" ry="34" fill="#fff" stroke="#222" stroke-width="3"/>
-      <ellipse cx="34" cy="50" rx="10" ry="13" fill="#222" transform="rotate(20 34 50)"/>
-      <ellipse cx="66" cy="50" rx="10" ry="13" fill="#222" transform="rotate(-20 66 50)"/>
-      <circle cx="35" cy="49" r="4" fill="#fff"/><circle cx="65" cy="49" r="4" fill="#fff"/>
-      <circle cx="36" cy="50" r="1.8" fill="#222"/><circle cx="64" cy="50" r="1.8" fill="#222"/>
-      <ellipse cx="50" cy="63" rx="6" ry="4.5" fill="#222"/>
-      <path class="mond-blij" d="M40 72 Q50 83 60 72" fill="none" stroke="#222" stroke-width="3" stroke-linecap="round"/>
-      <path class="mond-triest" d="M41 79 Q50 70 59 79" fill="none" stroke="#222" stroke-width="3" stroke-linecap="round"/>
-    </svg>
     <div>
-      <h1>TafelApp 🎋</h1>
+      <h1>TafelApp</h1>
       <p id="status">Python wordt geladen…</p>
     </div>
     <button id="geluid" class="sec" type="button" aria-label="Geluid aan of uit">🔊</button>
@@ -236,7 +241,7 @@
   </section>
 
   <section id="scherm-vraag" hidden style="flex:1; display:none; flex-direction:column; gap:.45rem">
-    <div class="voortgang"><div id="balk"><span id="looper">🐼</span></div></div>
+    <div class="voortgang"><div id="balk"><span id="looper">🐵</span></div></div>
     <div class="info"><span id="teller"></span><div id="reeks" class="reeks"></div></div>
     <div class="tijd" id="tijdbalk" hidden><div id="tijdvul"></div></div>
     <div id="vraag" class="vraag" aria-live="polite"></div>
@@ -269,19 +274,22 @@
       <g class="beenA r"><ellipse cx="138" cy="262" rx="20" ry="22" fill="#8a5230"/><ellipse cx="138" cy="274" rx="15" ry="9" fill="#f6d3aa"/></g>
       <ellipse cx="110" cy="205" rx="48" ry="58" fill="#8a5230"/>
       <ellipse cx="110" cy="212" rx="31" ry="40" fill="#f9dfbd"/>
-      <path d="M110 228 C92 214 96 197 110 205 C124 197 128 214 110 228 Z" fill="#ff6fa5"/>
-      <g class="armA l" style="transform-origin:64px 168px">
-        <ellipse cx="60" cy="198" rx="11" ry="33" fill="#8a5230"/>
-        <g transform="translate(32 192) scale(.5)">
-          <ellipse cx="50" cy="112" rx="30" ry="26" fill="#fff" stroke="#222" stroke-width="3"/>
-          <ellipse cx="32" cy="132" rx="10" ry="9" fill="#222"/><ellipse cx="68" cy="132" rx="10" ry="9" fill="#222"/>
-          <g id="aap-pandakop"></g>
+      <path d="M110 238 C84 218 90 192 110 203 C130 192 136 218 110 238 Z" fill="#ff6fa5"/>
+      <g class="boven l" style="transform-origin:66px 168px">
+        <ellipse cx="63" cy="186" rx="10" ry="21" fill="#8a5230"/>
+        <g class="onder l" style="transform-origin:62px 203px">
+          <circle cx="62" cy="203" r="10" fill="#8a5230"/>
+          <ellipse cx="61" cy="220" rx="9.5" ry="19" fill="#8a5230"/>
+          <circle cx="60" cy="238" r="10.5" fill="#f6d3aa"/>
         </g>
-        <circle cx="58" cy="230" r="11" fill="#f6d3aa"/>
       </g>
-      <g class="armA r" style="transform-origin:156px 168px">
-        <ellipse cx="160" cy="198" rx="11" ry="33" fill="#8a5230"/>
-        <circle cx="162" cy="230" r="11" fill="#f6d3aa"/>
+      <g class="boven r" style="transform-origin:154px 168px">
+        <ellipse cx="157" cy="186" rx="10" ry="21" fill="#8a5230"/>
+        <g class="onder r" style="transform-origin:158px 203px">
+          <circle cx="158" cy="203" r="10" fill="#8a5230"/>
+          <ellipse cx="159" cy="220" rx="9.5" ry="19" fill="#8a5230"/>
+          <circle cx="160" cy="238" r="10.5" fill="#f6d3aa"/>
+        </g>
       </g>
       <circle cx="54" cy="104" r="18" fill="#8a5230"/><circle cx="54" cy="104" r="11" fill="#f6d3aa"/>
       <circle cx="166" cy="104" r="18" fill="#8a5230"/><circle cx="166" cy="104" r="11" fill="#f6d3aa"/>
@@ -299,15 +307,7 @@
       <ellipse cx="110" cy="140" rx="8" ry="5" fill="#ff8fa3"/>
       <g transform="translate(136 52) rotate(15)"><path d="M0 0 L-20 -13 L-20 13 Z" fill="#ff7eb3"/><path d="M0 0 L20 -13 L20 13 Z" fill="#ff7eb3"/><circle r="6" fill="#ff4f93"/></g>
     </svg>
-    <svg id="figuur" viewBox="0 0 200 250" aria-hidden="true">
-      <g class="been l"><ellipse cx="72" cy="226" rx="17" ry="22" fill="#222"/></g>
-      <g class="been r"><ellipse cx="128" cy="226" rx="17" ry="22" fill="#222"/></g>
-      <ellipse cx="100" cy="170" rx="50" ry="56" fill="#fff" stroke="#222" stroke-width="3"/>
-      <g class="arm l"><ellipse cx="54" cy="165" rx="13" ry="32" fill="#222"/></g>
-      <g class="arm r"><ellipse cx="146" cy="165" rx="13" ry="32" fill="#222"/></g>
-      <g id="figuur-kop" transform="translate(30 6) scale(1.4)"></g>
-    </svg>
-  </div>
+    </div>
   <div id="bubbel"></div>
   <button id="toneel-knop" type="button">Overslaan »</button>
 </div>
