@@ -127,3 +127,63 @@ def sterren(goed, totaal):
     """Aantal sterren (1 t/m 3) voor een afgeronde ronde."""
     pct = int(goed) / max(1, int(totaal))
     return 3 if pct >= 0.9 else 2 if pct >= 0.7 else 1
+
+
+# ---- Levels per tafel --------------------------------------------------------
+AANTAL_LEVELS = 5
+GEHAALD = 0.8  # 8 van 10 goed om een level te halen
+LEVELS = {
+    1: {"naam": "Kiezen", "kies": True, "tijd": 0},
+    2: {"naam": "Intikken", "kies": False, "tijd": 0},
+    3: {"naam": "Tegen de klok", "kies": False, "tijd": 10},
+}  # level 4 en 5 volgen later
+
+
+def opties(a, b, aantal=4):
+    """Meerkeuze-antwoorden: het juiste antwoord plus geloofwaardige foute."""
+    a, b = int(a), int(b)
+    goed = a * b
+    kandidaten = {a * (b + 1), a * (b - 1), (a + 1) * b, (a - 1) * b,
+                  goed + 10, goed - 10, goed + 1, goed - 1, a + b}
+    keuze = [k for k in kandidaten if k > 0 and k != goed]
+    random.shuffle(keuze)
+    keuze = keuze[: aantal - 1]
+    extra = 1
+    while len(keuze) < aantal - 1:
+        if goed + extra not in keuze:
+            keuze.append(goed + extra)
+        extra += 1
+    lijst = keuze + [goed]
+    random.shuffle(lijst)
+    return lijst
+
+
+def overzicht(voortgang_json):
+    """Status van alle levels per tafel.
+
+    `voortgang_json`: {"7": {"1": 90, "2": 60}} = beste percentage per tafel en level.
+    Een level is open als het vorige level gehaald is (level 1 is altijd open).
+    """
+    vg = json.loads(voortgang_json) if voortgang_json else {}
+    drempel = round(GEHAALD * 100)
+    resultaat = {}
+    for tafel in range(1, MAX_FACTOR + 1):
+        beste = vg.get(str(tafel), {})
+        lijst, vorige_gehaald = [], True
+        for n in range(1, AANTAL_LEVELS + 1):
+            info = LEVELS.get(n)
+            pct = int(beste.get(str(n), 0))
+            gehaald = info is not None and pct >= drempel
+            lijst.append({
+                "nummer": n,
+                "naam": info["naam"] if info else "Binnenkort",
+                "kies": bool(info and info["kies"]),
+                "tijd": info["tijd"] if info else 0,
+                "beschikbaar": info is not None,
+                "open": info is not None and vorige_gehaald,
+                "gehaald": gehaald,
+                "beste": pct,
+            })
+            vorige_gehaald = gehaald
+        resultaat[str(tafel)] = lijst
+    return resultaat

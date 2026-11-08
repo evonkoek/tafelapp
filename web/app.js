@@ -7,7 +7,7 @@ let pythonKlaar = false;
 worker.onmessage = ({ data }) => {
   if (data.klaar) {
     pythonKlaar = true;
-    $("start").disabled = false;
+    tekenTafels();
     melding("Klaar om te oefenen.");
     herstelLaatsteSpeler();
     return;
@@ -45,7 +45,7 @@ function melding(tekst, waarschuwing = false) {
 }
 
 function toon(scherm) {
-  for (const id of ["scherm-start", "scherm-vraag", "scherm-klaar"]) {
+  for (const id of ["scherm-start", "scherm-levels", "scherm-vraag", "scherm-klaar"]) {
     const sectie = $(id);
     const zichtbaar = id === scherm;
     sectie.hidden = !zichtbaar;
@@ -104,11 +104,8 @@ async function kiesSpeler(ruw) {
   }
   huidig = { naam, sleutel };
   const speler = data.spelers[sleutel];
-  if (speler) {
-    zetTafels(speler.tafels && speler.tafels.length ? speler.tafels : [2]);
-    if (speler.aantal) $("aantal").value = String(speler.aantal);
-  }
   await tekenVoortgang($("voortgang-start"), speler, naam, true);
+  tekenTafels();
   return huidig;
 }
 
@@ -180,32 +177,61 @@ function wisSpeler(naam) {
   $("voortgang-start").replaceChildren();
   tekenSpelers();
   melding("Voortgang gewist.");
+  tekenTafels();
 }
 
-// ---- Startscherm: tafels ---------------------------------------------------
-const gekozen = new Set([2]);
-const tafelKnoppen = [];
+// ---- Menu: tafels en levels ------------------------------------------------
+let overzicht = null;
 
-for (let n = 1; n <= 10; n++) {
-  const b = el("button", String(n));
-  b.type = "button";
-  b.setAttribute("aria-pressed", gekozen.has(n));
-  b.addEventListener("click", () => {
-    gekozen.has(n) ? gekozen.delete(n) : gekozen.add(n);
-    b.setAttribute("aria-pressed", gekozen.has(n));
-  });
-  tafelKnoppen.push(b);
-  $("tafels").appendChild(b);
+async function haalOverzicht() {
+  const sp = huidig && data.spelers[huidig.sleutel];
+  overzicht = await py("overzicht", JSON.stringify((sp && sp.voortgang) || {}));
+  return overzicht;
 }
 
-function zetTafels(lijst) {
-  gekozen.clear();
-  lijst.forEach((n) => gekozen.add(n));
-  tafelKnoppen.forEach((b, i) => b.setAttribute("aria-pressed", gekozen.has(i + 1)));
+async function tekenTafels() {
+  if (!pythonKlaar) return;
+  const ov = await haalOverzicht();
+  const doel = $("tafels");
+  doel.replaceChildren();
+  for (let n = 1; n <= 10; n++) {
+    const lv = ov[String(n)].filter((l) => l.beschikbaar);
+    const gehaald = lv.filter((l) => l.gehaald).length;
+    const b = el("button");
+    b.type = "button";
+    b.append(el("b", String(n)), el("small", "★".repeat(gehaald) + "☆".repeat(lv.length - gehaald)));
+    b.addEventListener("click", () => naarLevels(n));
+    doel.appendChild(b);
+  }
 }
 
-$("alle").addEventListener("click", () => zetTafels([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]));
-$("geen").addEventListener("click", () => zetTafels([]));
+async function naarLevels(tafel) {
+  const sp = await kiesSpeler($("naam").value);
+  if (!sp) {
+    melding("Vul eerst je naam in.", true);
+    $("naam").focus();
+    return;
+  }
+  melding("");
+  const ov = await haalOverzicht();
+  $("levels-kop").textContent = `Tafel van ${tafel}`;
+  const lijst = $("levels");
+  lijst.replaceChildren();
+  for (const l of ov[String(tafel)]) {
+    const b = el("button", undefined, "levelknop");
+    b.type = "button";
+    b.disabled = !l.open;
+    const status = !l.beschikbaar ? "🔒 Binnenkort"
+      : !l.open ? "🔒 Haal eerst het vorige level"
+      : l.gehaald ? `✅ ${l.beste}%`
+      : l.beste ? `${l.beste}%` : "Nieuw";
+    const omschrijving = l.beschikbaar ? l.naam + (l.tijd ? ` (${l.tijd} sec)` : "") : "";
+    b.append(el("b", `Level ${l.nummer}`), el("span", omschrijving), el("small", status));
+    b.addEventListener("click", () => startRonde(tafel, l.nummer, l));
+    lijst.appendChild(b);
+  }
+  toon("scherm-levels");
+}
 
 $("naam").addEventListener("change", () => kiesSpeler($("naam").value));
 $("naam").addEventListener("input", () => melding(pythonKlaar ? "Klaar om te oefenen." : "Python wordt geladen…"));
@@ -271,7 +297,7 @@ function zetGeluid(aan) {
 // ---- Panda-toneel: intro en afsluiting -------------------------------------
 function toneel(modus, tekst = "", n = 3) {
   return new Promise((klaar) => {
-    const t = $("toneel"), f = $("figuur"), knop = $("toneel-knop"), b = $("bubbel");
+    const t = $("toneel"), f = $(modus === "intro" ? "aap" : "figuur"), knop = $("toneel-knop"), b = $("bubbel");
     const timers = [];
     let gesloten = false;
     const na = (ms, fn) => timers.push(setTimeout(fn, ms));
@@ -293,8 +319,8 @@ function toneel(modus, tekst = "", n = 3) {
       knop.className = "sec";
       stand("loop");
       na(2200, () => stand("dans"));
-      na(4600, () => {
-        stand("wenk");
+      na(4300, () => {
+        stand("klap");
         b.textContent = "Hoi! Kom je mee tafels oefenen? 🎋";
         knop.textContent = "Ik doe mee! 🎋";
         knop.className = "";
@@ -352,46 +378,68 @@ function toonReeks(animatie) {
 // ---- Oefenronde ------------------------------------------------------------
 const ronde = { vragen: [], i: 0, goed: 0, fouten: [], invoer: "", wacht: false, sleutel: "", naam: "", tafels: [] };
 
-async function startRonde() {
-  if (!pythonKlaar) return;
-  const speler = await kiesSpeler($("naam").value);
-  if (!speler) {
-    melding("Vul eerst je naam in.", true);
-    toon("scherm-start");
-    $("naam").focus();
-    return;
+async function startRonde(tafel, nummer, info) {
+  if (!huidig) return naarStart();
+  const niv = info || (overzicht || (await haalOverzicht()))[String(tafel)][nummer - 1];
+  if (!data.spelers[huidig.sleutel]) {
+    data.spelers[huidig.sleutel] = { naam: huidig.naam, resultaten: [], voortgang: {} };
   }
-  if (gekozen.size === 0) {
-    melding("Kies eerst minstens één tafel.", true);
-    toon("scherm-start");
-    return;
-  }
-  const tafels = [...gekozen].sort((a, b) => a - b);
-  const aantal = Number($("aantal").value);
-
-  if (!data.spelers[speler.sleutel]) {
-    data.spelers[speler.sleutel] = { naam: speler.naam, resultaten: [], tafels, aantal };
-  }
-  const opgeslagen = data.spelers[speler.sleutel];
-  Object.assign(opgeslagen, { naam: speler.naam, tafels, aantal });
-  data.laatste = speler.sleutel;
+  data.laatste = huidig.sleutel;
   bewaarData();
-  tekenSpelers();
-
   melding("");
-  ronde.vragen = await py("maak_vragen", tafels, aantal);
+  ronde.vragen = await py("maak_vragen", [tafel], 10);
   Object.assign(ronde, {
     i: 0, goed: 0, reeks: 0, besteReeks: 0, fouten: [], invoer: "", wacht: false,
-    sleutel: speler.sleutel, naam: speler.naam, tafels,
+    sleutel: huidig.sleutel, naam: huidig.naam, tafel, niveau: nummer, niv, tafels: [tafel],
   });
   toon("scherm-vraag");
   toonVraag();
 }
 
+// ---- Meerkeuze en timer ----------------------------------------------------
+async function toonOpties(a, b) {
+  const lijst = await py("opties", a, b);
+  const doel = $("opties");
+  doel.replaceChildren();
+  for (const o of lijst) {
+    const k = el("button", String(o));
+    k.type = "button";
+    k.addEventListener("click", () => { geluid("tik"); beantwoord(String(o)); });
+    doel.appendChild(k);
+  }
+}
+
+function markeerOpties(gegeven, juist) {
+  $("opties").querySelectorAll("button").forEach((k) => {
+    k.disabled = true;
+    if (k.textContent === String(juist)) k.classList.add("goed");
+    else if (k.textContent === gegeven) k.classList.add("fout");
+  });
+}
+
+let timerId = null;
+function stopTimer() {
+  clearTimeout(timerId);
+  const v = $("tijdvul");
+  v.style.width = getComputedStyle(v).width;
+  v.style.transition = "none";
+}
+function startTimer(sec) {
+  $("tijdbalk").hidden = !sec;
+  if (!sec) return;
+  const v = $("tijdvul");
+  v.style.transition = "none";
+  v.style.width = "100%";
+  void v.offsetWidth;
+  v.style.transition = `width ${sec}s linear`;
+  v.style.width = "0%";
+  timerId = setTimeout(() => beantwoord("", true), sec * 1000);
+}
+
 function toonVraag() {
   const [a, b] = ronde.vragen[ronde.i];
   $("vraag").textContent = `${a} × ${b}`;
-  $("teller").textContent = `Som ${ronde.i + 1} van ${ronde.vragen.length}`;
+  $("teller").textContent = `Tafel ${ronde.tafel} · L${ronde.niveau} · Som ${ronde.i + 1}/${ronde.vragen.length}`;
   $("balk").style.width = `${(ronde.i / ronde.vragen.length) * 100}%`;
   $("feedback").textContent = "";
   $("vraag").classList.remove("pop");
@@ -401,6 +449,12 @@ function toonVraag() {
   ronde.invoer = "";
   ronde.wacht = false;
   toonInvoer();
+  const nv = ronde.niv;
+  $("numpad").hidden = nv.kies;
+  $("antwoord").hidden = nv.kies;
+  $("opties").hidden = !nv.kies;
+  if (nv.kies) toonOpties(a, b);
+  else startTimer(nv.tijd);
 }
 
 function toonInvoer(klasse = "") {
@@ -417,11 +471,19 @@ function toets(teken) {
   toonInvoer();
 }
 
-async function bevestig() {
+function bevestig() {
   if (ronde.wacht || ronde.invoer === "") return;
+  beantwoord(ronde.invoer);
+}
+
+async function beantwoord(gegeven, teLaat = false) {
+  if (ronde.wacht) return;
   ronde.wacht = true;
+  stopTimer();
+  ronde.invoer = gegeven;
   const [a, b] = ronde.vragen[ronde.i];
-  const goed = await py("controleer", a, b, ronde.invoer);
+  const goed = await py("controleer", a, b, gegeven);
+  if (ronde.niv.kies) markeerOpties(gegeven, a * b);
   if (goed) {
     ronde.goed++;
     ronde.reeks++;
@@ -436,9 +498,9 @@ async function bevestig() {
     if (navigator.vibrate) navigator.vibrate(30);
   } else {
     ronde.reeks = 0;
-    ronde.fouten.push({ a, b, jij: ronde.invoer, antwoord: a * b });
+    ronde.fouten.push({ a, b, jij: ronde.invoer || "–", antwoord: a * b });
     toonInvoer("fout");
-    $("feedback").textContent = `${await py("troost")} ${a} × ${b} = ${a * b}`;
+    $("feedback").textContent = `${teLaat ? "Te laat! " : ""}${await py("troost")} ${a} × ${b} = ${a * b}`;
     toonReeks(false);
     pandaMood("triest", 1400);
     geluid("fout");
@@ -459,11 +521,20 @@ async function eindig() {
   // Resultaat opslaan bij deze speler
   const speler = data.spelers[ronde.sleutel];
   const vorige = speler.resultaten[speler.resultaten.length - 1];
-  speler.resultaten.push({ d: vandaag(), goed: ronde.goed, totaal, tafels: ronde.tafels });
+  const was = (await haalOverzicht())[String(ronde.tafel)][ronde.niveau - 1].gehaald;
+  speler.resultaten.push({ d: vandaag(), goed: ronde.goed, totaal, tafels: ronde.tafels, niveau: ronde.niveau });
+  const pct = Math.round((100 * ronde.goed) / totaal);
+  speler.voortgang ||= {};
+  const vt = (speler.voortgang[ronde.tafel] ||= {});
+  vt[ronde.niveau] = Math.max(vt[ronde.niveau] || 0, pct);
   speler.resultaten = speler.resultaten.slice(-200);
   bewaarData();
+  const lv = (await haalOverzicht())[String(ronde.tafel)];
+  const volgend = lv[ronde.niveau];
+  const unlock = !was && lv[ronde.niveau - 1].gehaald && volgend && volgend.beschikbaar
+    ? ` · Level ${volgend.nummer} vrijgespeeld! 🔓` : "";
 
-  $("klaar-kop").textContent = `Klaar, ${ronde.naam}!`;
+  $("klaar-kop").textContent = `Klaar, ${ronde.naam}! Tafel ${ronde.tafel}, level ${ronde.niveau}`;
   $("score").textContent = `${ronde.goed} / ${totaal}`;
   $("bericht").textContent = await py("beoordeling", ronde.goed, totaal);
   const sterren = await py("sterren", ronde.goed, totaal);
@@ -474,7 +545,7 @@ async function eindig() {
   }));
   $("vergelijk").textContent = (vorige
     ? `Vorige ronde: ${vorige.goed} / ${vorige.totaal}`
-    : "Dit was je eerste ronde!") + (ronde.besteReeks >= 2 ? ` · Langste reeks: ${ronde.besteReeks}` : "");
+    : "Dit was je eerste ronde!") + unlock + (ronde.besteReeks >= 2 ? ` · Langste reeks: ${ronde.besteReeks}` : "");
 
   const lijst = $("fouten");
   lijst.replaceChildren();
@@ -492,6 +563,7 @@ async function eindig() {
 }
 
 function naarStart() {
+  stopTimer();
   toon("scherm-start");
   tekenSpelers();
   if (huidig) kiesSpeler(huidig.naam);
@@ -507,15 +579,15 @@ for (const t of ["1", "2", "3", "4", "5", "6", "7", "8", "9", "⌫", "0", "OK"])
 }
 
 document.addEventListener("keydown", (e) => {
-  if ($("scherm-vraag").hidden) return;
+  if ($("scherm-vraag").hidden || (ronde.niv && ronde.niv.kies)) return;
   if (/^[0-9]$/.test(e.key)) toets(e.key);
   else if (e.key === "Backspace") toets("⌫");
   else if (e.key === "Enter") bevestig();
 });
 
-$("start").addEventListener("click", startRonde);
-$("opnieuw").addEventListener("click", startRonde);
-$("andere").addEventListener("click", naarStart);
+$("opnieuw").addEventListener("click", () => startRonde(ronde.tafel, ronde.niveau));
+$("andere").addEventListener("click", () => naarLevels(ronde.tafel));
+$("terug").addEventListener("click", naarStart);
 $("stop").addEventListener("click", naarStart);
 tekenSpelers();
 toon("scherm-start");
@@ -523,6 +595,8 @@ toon("scherm-start");
 // ---- Opstarten: geluid, panda aantikken, intro -----------------------------
 $("figuur-kop").innerHTML = $("panda").innerHTML;
 $("figuur-kop").firstElementChild.remove(); // achtergrondschijf weghalen
+$("aap-pandakop").innerHTML = $("panda").innerHTML;
+$("aap-pandakop").firstElementChild.remove();
 zetGeluid(geluidAan);
 $("geluid").addEventListener("click", () => { zetGeluid(!geluidAan); if (geluidAan) geluid("goed", 2); });
 $("panda").addEventListener("click", () => { pandaMood("blij", 900); geluid("boing"); feest(10); });
